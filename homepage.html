@@ -9,7 +9,7 @@
     <form method="get" action="http://www.google.com/search">
         <table id="gsrch">
             <tr>
-                <td><input type="text" name="q" size="25" maxlength="255" value="" id="gsrch_field" /></td>
+                <td><input type="text" name="q" size="25" maxlength="255" value="google" id="gsrch_field" onfocus="this.value = '';" /></td>
                 <td><button type="submit" id="test"></button></td>
             </tr>
         </table>
@@ -30,9 +30,9 @@
     <a href="http://homer.moskovko.com:666">dd-wrt</a><br />
     <a href="http://www.github.com/">github</a>
 
-    <script>
+    <!--script>
         document.getElementById('gsrch_field').focus();
-    </script>
+    </script-->
 </body>
 
 </html>
