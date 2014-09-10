@@ -1,0 +1,50 @@
+$tile_size:   100px
+$tile_margin: 5px
+
+.tile-1-1
+  width:  $tile_size
+  height: $tile_size
+  margin: $tile_margin
+  background-color: red
+
+.tile-1-1-empty 
+  width:  $tile_size
+  height: $tile_size
+  margin: $tile_margin
+
+
+.tile-1-2 
+  width:  $tile_size
+  height: (2 * $tile_size) + (2 * $tile_margin)
+  margin: $tile_margin
+  background-color: blue
+
+
+.tile-2-1 
+  width:  (2 * $tile_size) + (2 * $tile_margin)
+  height: $tile_size
+  margin: $tile_margin
+  background-color: green
+
+
+.tile-2-2 
+  width:  (2 * $tile_size) + (2 * $tile_margin)
+  height: (2 * $tile_size) + (2 * $tile_margin)
+  margin: $tile_margin
+  background-color: purple
+
+
+.row 
+  height: $tile_size + (2 * $tile_margin)
+  clear: both
+  vertical-align:top
+  display: -webkit-box
+  display: -moz-box
+  display: -ms-flexbox
+  display: -webkit-flex
+  display: flex   
+
+
+.container 
+  width: 330px
+
