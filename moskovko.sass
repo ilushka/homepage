@@ -1,50 +1,51 @@
-$tile_size:   100px
-$tile_margin: 5px
+$tile_size: 200px
+$tile_margin:   5px
+$column_count:  3 
+
+$row_width: ($column_count * $tile_size) + ($column_count * (2 * $tile_margin))
 
 .tile-1-1
-  width:  $tile_size
-  height: $tile_size
-  margin: $tile_margin
+  width:    $tile_size
+  height:   $tile_size
+  margin:   $tile_margin
   background-color: red
 
 .tile-1-1-empty 
-  width:  $tile_size
-  height: $tile_size
-  margin: $tile_margin
-
+  width:    $tile_size
+  height:   $tile_size
+  margin:   $tile_margin
 
 .tile-1-2 
-  width:  $tile_size
-  height: (2 * $tile_size) + (2 * $tile_margin)
-  margin: $tile_margin
+  width:    $tile_size
+  height:   (2 * $tile_size) + (2 * $tile_margin)
+  margin:   $tile_margin
   background-color: blue
 
-
 .tile-2-1 
-  width:  (2 * $tile_size) + (2 * $tile_margin)
-  height: $tile_size
-  margin: $tile_margin
+  width:    (2 * $tile_size) + (2 * $tile_margin)
+  height:   $tile_size
+  margin:   $tile_margin
   background-color: green
 
-
 .tile-2-2 
-  width:  (2 * $tile_size) + (2 * $tile_margin)
-  height: (2 * $tile_size) + (2 * $tile_margin)
-  margin: $tile_margin
+  width:    (2 * $tile_size) + (2 * $tile_margin)
+  height:   (2 * $tile_size) + (2 * $tile_margin)
+  margin:   $tile_margin
   background-color: purple
 
-
 .row 
-  height: $tile_size + (2 * $tile_margin)
-  clear: both
-  vertical-align:top
-  display: -webkit-box
-  display: -moz-box
-  display: -ms-flexbox
-  display: -webkit-flex
-  display: flex   
-
+  width:    $row_width
+  height:   $tile_size + (2 * $tile_margin)
+  clear:    both
+  display:  -webkit-box
+  display:  -moz-box
+  display:  -ms-flexbox
+  display:  -webkit-flex
+  display:  flex   
 
 .container 
-  width: 330px
+  width:    $row_width
+  display:  block
+  margin-left:      auto
+  margin-right:     auto
 
