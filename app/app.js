@@ -9,8 +9,8 @@ angular.module('myApp', [
     .state('index', {
       url: '',
       views: {
-        'viewA': {
-          template: 'viewA'
+        'test-tile-1-1': {
+          templateUrl: 'test-tile-1-1.html'
         },
         'viewB': {
           template: 'viewB'
