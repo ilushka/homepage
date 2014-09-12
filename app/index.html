@@ -5,8 +5,8 @@
   <link rel="stylesheet" type="text/css" href="moskovko.css" />
 </head>
 
-<body>
-  <div class="background">..</div>
+<body ng-controller="MyAppController">
+  <div class="background" ng-style="{'background-color': background_color}">{{background_color}}</div>
   <div class="container">
     <div class="row">
       <div ui-view="test-tile-1-1"></div>
