@@ -40,7 +40,7 @@ window.addEventListener("load", function(event) {
     };
 
     window.onmousewheel = window.onwheel = window.ontouchmove = document.onkeydown = function(e) {
-//        e.preventDefault();
+        e.preventDefault();
         console.log(e);
         animatePopup();
     };
