@@ -1,63 +1,80 @@
+var ANIMATION_TYPE = {
+    NONE: 0,
+    UP:   1,
+    DOWN: 2,
+};
+
 function AnimeObj(obj) {
-    this.obj = obj;                 // object to animate
-    this.animeInProgress = false;   // is animation in progress
-    this.rate = 1;                  // unit count that is used to modify property per each frame 
+    this._obj = obj;                 // object to animate
+    this._animeInProgress = false;   // is animation in progress
+    this._rate = 1;                  // unit count that is used to modify property per each frame 
+    this._intervalId = 0;            // current interval ID
+    this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
 
     this.setRate = function(rate) {
-        this.rate = rate;
+        this._rate = Math.abs(rate);
     };
 
-    /* animate object on Y axis */
+    this.getCurrentType = function() {
+        return this._currentAnimation;
+    };
+
+    this.stopAnimation = function() {
+        clearInterval(this._intervalId);
+        this._animeInProgress = false;
+        this._currentAnimation = ANIMATION_TYPE.NONE;
+    };
+
+    // animate object on Y axis
     this.animateY = function(from, to) {
         var that = this;
         var position = from;
-        var intId = 0;
+        var directionalRate = 0;
 
-        if (that.animeInProgress === true)
+        if (that._animeInProgress === true)
             return;
-        that.animeInProgress = true;
-        obj.style.top = position + "px";
-        intId = setInterval(animateYFrame, 5);
+        that._animeInProgress = true;
 
-        /* per frame function */
+        if (from > to) {
+            // moving up
+            directionalRate = -that._rate;
+            that._currentAnimation = ANIMATION_TYPE.UP;
+        } else if (from < to) {
+            // movinf down
+            directionalRate = that._rate;
+            that._currentAnimation = ANIMATION_TYPE.DOWN;
+        } else {
+            // stay in the same place
+            that.stopAnimation();
+            return;
+        }
+
+        that._obj.style.top = position + "px";
+        that._intervalId = setInterval(animateYFrame, 5);
+
+        // per frame function 
         function animateYFrame() {
-            if (position <= to) {
-                clearInterval(intId);
-                that.animeInProgress = false;
+            if (position === to) {
+                // animation is complete
+                that.stopAnimation();
             } else {
-                position -= that.rate;
-                that.obj.style.top = position + "px";
+                // keep moving object
+                var delta = to - position;
+                if (Math.abs(delta) < that._rate) {
+                    // leftover distance is smaller than the rate
+                    position += delta;
+                } else {
+                    position += directionalRate;
+                }
+                that._obj.style.top = position + "px";
             } 
         }
     };
+
 }
 
-/* execute function every N events */
-var throttleFunc = function(rate, func) {
-    var eventCount = 0;
-    return function(e) {
-        if (eventCount === 0) {
-            func();
-            eventCount = rate;
-        }
-        eventCount--;
-    }
-};
-
-/* execute function every N milliseconds */
-var debounceFunc = function(interval, func) {
-    var okToExec = true;
-    return function(e) {
-        if (okToExec === true) {
-            okToExec = false;
-            func();
-            setTimeout(function() {okToExec = true;}, interval);
-        }
-    }
-};
-
-/* execute func when event stream stops for N milliseconds */
-var throttleFuncWithTimeout = function(rate, func, timeout) {
+// execute func when event stream stops for "timeout" milliseconds or recieves "rate" events 
+var throttleFunc = function(rate, timeout, func) {
     var toId = 0;
     var eventCount = 0;
     return function(e) {
@@ -75,17 +92,39 @@ var throttleFuncWithTimeout = function(rate, func, timeout) {
 };
 
 window.addEventListener("load", function(event) {
+    var EVENT_THROTTLE_RATE = 100;
+
     var popupAnime = new AnimeObj(document.getElementById("popup"));
     popupAnime.setRate(18);
-    var scrollPopup = function() {
+    var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, 100, function() {
+        if (popupAnime.getCurrentType() === ANIMATION_TYPE.DOWN) {
+            popupAnime.stopAnimation();
+        }
         popupAnime.animateY(window.innerHeight, 30);
-    };
-    var scrollPopupThrottle = throttleFuncWithTimeout(20, scrollPopup, 100);
+    });
+    var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, 100, function() {
+        if (popupAnime.getCurrentType() === ANIMATION_TYPE.UP) {
+            popupAnime.stopAnimation();
+        }
+        popupAnime.animateY(30, window.innerHeight);
+    });
 
-    window.onmousewheel = window.onwheel = window.ontouchmove = document.onkeydown = function(e) {
+    document.onkeydown = function(e) {
         e.preventDefault();
         console.log(e);
-        scrollPopupThrottle(e);
+        throttledScrollUp();
+    };
+
+    window.onmousewheel = window.onwheel = function(e) {
+        e.preventDefault();
+        console.log(e);
+        if (e.deltaY > 0) {
+            // scrolling down
+            throttledScrollDown();
+        } else {
+            // scrolling up
+            throttledScrollUp();
+        }
     };
 }, false);
 
