@@ -5,10 +5,10 @@ var ANIMATION_TYPE = {
 };
 
 function AnimeObj(obj) {
-    this._obj = obj;                 // object to animate
-    this._animeInProgress = false;   // is animation in progress
-    this._rate = 1;                  // unit count that is used to modify property per each frame 
-    this._intervalId = 0;            // current interval ID
+    this._obj = obj;                  // object to animate
+    this._animeInProgress = false;    // is animation in progress
+    this._rate = 1;                   // unit count that is used to modify property per each frame 
+    this._intervalId = 0;             // current interval ID
     this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
 
     this.setRate = function(rate) {
@@ -115,13 +115,14 @@ window.addEventListener("load", function(event) {
         throttledScrollUp();
     };
 
-    window.onmousewheel = window.onwheel = function(e) {
+//    window.onmousewheel = window.onwheel = function(e) {
+    window.onmousewheel = function(e) {
         e.preventDefault();
         console.log(e);
         if (e.deltaY > 0) {
             // scrolling down
             throttledScrollDown();
-        } else {
+        } else if (e.deltaY != -0) {
             // scrolling up
             throttledScrollUp();
         }
