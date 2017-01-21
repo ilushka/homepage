@@ -31,6 +31,7 @@ function AnimeObj(obj) {
         }
     };
 }
+
 /* execute function every N events */
 var throttleFunc = function(rate, func) {
     var eventCount = 0;
@@ -42,6 +43,7 @@ var throttleFunc = function(rate, func) {
         eventCount--;
     }
 };
+
 /* execute function every N milliseconds */
 var debounceFunc = function(interval, func) {
     var okToExec = true;
@@ -54,18 +56,36 @@ var debounceFunc = function(interval, func) {
     }
 };
 
+/* execute func when event stream stops for N milliseconds */
+var throttleFuncWithTimeout = function(rate, func, timeout) {
+    var toId = 0;
+    var eventCount = 0;
+    return function(e) {
+        if (eventCount === 0) {
+            func();
+        }
+        eventCount++;
+        if (eventCount === rate) {
+            eventCount = 0;
+            console.log("eventCount");
+        }
+        clearTimeout(toId);
+        toId = setTimeout(function() {console.log("timeout");eventCount = 0;}, timeout);
+    }
+};
+
 window.addEventListener("load", function(event) {
     var popupAnime = new AnimeObj(document.getElementById("popup"));
     popupAnime.setRate(18);
     var scrollPopup = function() {
         popupAnime.animateY(window.innerHeight, 30);
     };
-    var scrollPopupDebounced = debounceFunc(500, scrollPopup);
+    var scrollPopupThrottle = throttleFuncWithTimeout(20, scrollPopup, 100);
 
     window.onmousewheel = window.onwheel = window.ontouchmove = document.onkeydown = function(e) {
         e.preventDefault();
         console.log(e);
-        scrollPopupDebounced(e);
+        scrollPopupThrottle(e);
     };
 }, false);
 
