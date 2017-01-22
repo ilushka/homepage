@@ -4,71 +4,141 @@ var ANIMATION_TYPE = {
     DOWN: 2,
 };
 
+function AnimateY(obj, from, to, rate) {
+    this._obj = obj;
+    this._position = from;
+    this._to = to;
+    this._isComplete = false;
+    if (from > to) {
+        this._rate = -rate;
+    } else if (from < to) {
+        this._rate = rate;
+    } else {
+        this._rate = 0;
+    }
+
+    this.isComplete = function() {
+        return this._isComplete;
+    };
+
+    this.drawFrame = function() {
+        var delta = 0;
+        if (this._isComplete === true) {
+            return;
+        }
+        delta = this._to - this._position;
+        if (Math.abs(delta) < Math.abs(this._rate)) {
+            // leftover distance is smaller than the rate
+            this._position += delta;
+        } else {
+            this._position += this._rate;;
+        }
+        this._obj.style.top = this._position + "px";
+        if (this._position === this._to) {
+            this._isComplete = true;
+        }
+    };
+} 
+
+function AnimateOpacity(obj, from, to, rate) {
+    this._obj = obj;
+    this._opacity = from;
+    this._to = to;
+    this._isComplete = false;
+    if (from > to) {
+        this._rate = -rate;
+    } else if (from < to) {
+        this._rate = rate;
+    } else {
+        this._rate = 0;
+    }
+
+    this.isComplete = function() {
+        return this._isComplete;
+    };
+
+    this.drawFrame = function() {
+        var delta = 0;
+        if (this._isComplete === true) {
+            return;
+        }
+        delta = this._to - this._opacity;
+        if (Math.abs(delta) < Math.abs(this._rate)) {
+            // leftover opacity is smaller than the rate
+            this._opacity += delta;
+        } else {
+            this._opacity += this._rate;;
+        }
+        this._opacity = Math.round(this._opacity * 1000) / 1000;
+        this._obj.style.opacity = this._opacity;
+        if (this._opacity === this._to) {
+            this._isComplete = true;
+        }
+    };
+}
+
 function AnimeObj(obj) {
     this._obj = obj;                  // object to animate
     this._animeInProgress = false;    // is animation in progress
-    this._rate = 1;                   // unit count that is used to modify property per each frame 
     this._intervalId = 0;             // current interval ID
-    this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
+//    this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
+    this._animationQueue = [];
 
-    this.setRate = function(rate) {
-        this._rate = Math.abs(rate);
-    };
-
+/*
     this.getCurrentType = function() {
         return this._currentAnimation;
     };
+*/
 
     this.stopAnimation = function() {
         clearInterval(this._intervalId);
         this._animeInProgress = false;
-        this._currentAnimation = ANIMATION_TYPE.NONE;
+//        this._currentAnimation = ANIMATION_TYPE.NONE;
+    };
+
+    this.start = function() {
+        var that = this;
+
+        if (this._animeInProgress === true) {
+            return;
+        }
+        this._animeInProgress = true;
+        this._intervalId = setInterval(frameDrawer, 5);
+
+        // per frame function 
+        function frameDrawer() {
+            if (that._animationQueue.length === 0) {
+                // we are done with all animations in queue
+                that.stopAnimation();
+                return;
+            }
+            for (var ii = 0; ii < that._animationQueue.length; ii++) {
+                if (that._animationQueue[ii].isComplete() === false) {
+                    that._animationQueue[ii].drawFrame();
+                } else {
+                    // this particular animation is complete
+                    that._animationQueue.splice(ii, 1);
+                }
+            }
+        }
     };
 
     // animate object on Y axis
-    this.animateY = function(from, to) {
-        var that = this;
-        var position = from;
-        var directionalRate = 0;
-
-        if (that._animeInProgress === true)
-            return;
-        that._animeInProgress = true;
-
-        if (from > to) {
-            // moving up
-            directionalRate = -that._rate;
-            that._currentAnimation = ANIMATION_TYPE.UP;
-        } else if (from < to) {
-            // movinf down
-            directionalRate = that._rate;
-            that._currentAnimation = ANIMATION_TYPE.DOWN;
-        } else {
-            // stay in the same place
-            that.stopAnimation();
-            return;
+    this.animateY = function(from, to, rate) {
+        if (this._animeInProgress === true) {
+            return this;
         }
+        this._animationQueue.push(new AnimateY(this._obj, from, to, rate));
+        return this;
+    };
 
-        that._obj.style.top = position + "px";
-        that._intervalId = setInterval(animateYFrame, 5);
-
-        // per frame function 
-        function animateYFrame() {
-            if (position === to) {
-                // animation is complete
-                that.stopAnimation();
-            } else {
-                // keep moving object
-                var delta = to - position;
-                if (Math.abs(delta) < that._rate) {
-                    // leftover distance is smaller than the rate
-                    position += delta;
-                } else {
-                    position += directionalRate;
-                }
-                that._obj.style.top = position + "px";
-            } 
+    // animate object's opacity
+    this.animateOpacity = function(from, to, rate) {
+        if (this._animeInProgress === true) {
+            return this;
         }
+        this._animationQueue.push(new AnimateOpacity(this._obj, from, to, rate));
+        return this;
     };
 
 }
@@ -92,21 +162,15 @@ var throttleFunc = function(rate, timeout, func) {
 };
 
 window.addEventListener("load", function(event) {
-    var EVENT_THROTTLE_RATE = 100;
+    var EVENT_THROTTLE_RATE = 45;
+    var DEBOUNCE_DELAY  = 100;
 
     var popupAnime = new AnimeObj(document.getElementById("popup"));
-    popupAnime.setRate(18);
-    var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, 100, function() {
-        if (popupAnime.getCurrentType() === ANIMATION_TYPE.DOWN) {
-            popupAnime.stopAnimation();
-        }
-        popupAnime.animateY(window.innerHeight, 30);
+    var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
+        popupAnime.animateY(window.innerHeight, 30, 18).animateOpacity(0.0, 1.0, 0.01).start();
     });
-    var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, 100, function() {
-        if (popupAnime.getCurrentType() === ANIMATION_TYPE.UP) {
-            popupAnime.stopAnimation();
-        }
-        popupAnime.animateY(30, window.innerHeight);
+    var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
+        popupAnime.animateY(30, window.innerHeight, 18).animateOpacity(1.0, 0.0, 0.04).start();
     });
 
     document.onkeydown = function(e) {
@@ -116,16 +180,28 @@ window.addEventListener("load", function(event) {
     };
 
 //    window.onmousewheel = window.onwheel = function(e) {
+    var lastDeltaY = 0;
     window.onmousewheel = function(e) {
         e.preventDefault();
         console.log(e);
-        if (e.deltaY > 0) {
-            // scrolling down
-            throttledScrollDown();
-        } else if (e.deltaY != -0) {
-            // scrolling up
-            throttledScrollUp();
+        // NOTE: we want to react only to accelerating events. this is especially important for
+        // macbook touchpad because it generates a lot of events that first accelerate then slow
+        // down. by doing this we can detect another acceleration while the scrolling is still decelerating.
+        // we set throttling event count that is equal to max number of accelerating events in one
+        // touchpad slide. combined with short debounce timeout we'll detect all accelerating events,
+        // then timeout, and then will be ready to detect another acceleration/touchpad slide. of course,
+        // if another acceleration happens while we still accelerating from previous slide we won't detect
+        // it until throttling event count is reached.
+        if (Math.abs(e.deltaY) > lastDeltaY) {
+            if (e.deltaY > 0) {
+                // scrolling down
+                throttledScrollDown();
+            } else if (e.deltaY != -0) {
+                // scrolling up
+                throttledScrollUp();
+            }
         }
+        lastDeltaY = Math.abs(e.deltaY);
     };
 }, false);
 
