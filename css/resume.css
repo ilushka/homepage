@@ -42,3 +42,7 @@ header > h1 {
     background-color: red;
 }
 
+.popup > div {
+    font-size: 10em;
+}
+

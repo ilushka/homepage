@@ -91,6 +91,10 @@ function AnimeObj(obj) {
     };
 */
 
+    this.animationInProgress = function() {
+        return this._animeInProgress;
+    };
+
     this.stopAnimation = function() {
         clearInterval(this._intervalId);
         this._animeInProgress = false;
@@ -113,6 +117,7 @@ function AnimeObj(obj) {
                 that.stopAnimation();
                 if (that._completionFunc !== null) {
                     that._completionFunc();
+                    that._completionFunc = null;
                 }
                 return;
             }
@@ -220,20 +225,36 @@ window.addEventListener("load", function(event) {
                 [invisiblePopup, invisPopupAnime, visiblePopup, visPopupAnime];
     };
     var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        visPopupAnime.stopAnimation();
-        invisPopupAnime.stopAnimation();
+        if (visPopupAnime.animationInProgress() || invisPopupAnime.animationInProgress()) {
+            return;
+        }
         invisiblePopup.replaceChild(popupList.getNextPopup(), invisiblePopup.childNodes[0]);
-        visPopupAnime.animateY(100, (0 - visiblePopup.clientHeight), 18).animateOpacity(1.0, 0.0, 0.01).start();
-        invisPopupAnime.animateY(window.innerHeight, 100, 18).animateOpacity(0.0, 1.0, 0.01).start();
+        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.05).start();
+        invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.1).start();
         switchPopups();
+/*
+        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.05)
+            .completion(function() {
+                invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.1).start();
+                switchPopups();
+            }).start();
+*/
     });
     var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        visPopupAnime.stopAnimation();
-        invisPopupAnime.stopAnimation();
+        if (visPopupAnime.animationInProgress() || invisPopupAnime.animationInProgress()) {
+            return;
+        }
         invisiblePopup.replaceChild(popupList.getPrevPopup(), invisiblePopup.childNodes[0]);
-        invisPopupAnime.animateY((0 - invisiblePopup.clientHeight), 100, 18).animateOpacity(0.0, 1.0, 0.01).start();
-        visPopupAnime.animateY(100, window.innerHeight, 18).animateOpacity(1.0, 0.0, 0.01).start();
+        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.05).start();
+        invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.1).start();
         switchPopups();
+/*
+        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.05)
+            .completion(function() {
+                invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.1).start();
+                switchPopups();
+            }).start();
+*/
     });
 
 
