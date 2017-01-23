@@ -229,8 +229,8 @@ window.addEventListener("load", function(event) {
             return;
         }
         invisiblePopup.replaceChild(popupList.getNextPopup(), invisiblePopup.childNodes[0]);
-        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.05).start();
-        invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.1).start();
+        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.04).start();
+        invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
         switchPopups();
 /*
         visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.05)
@@ -245,8 +245,8 @@ window.addEventListener("load", function(event) {
             return;
         }
         invisiblePopup.replaceChild(popupList.getPrevPopup(), invisiblePopup.childNodes[0]);
-        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.05).start();
-        invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.1).start();
+        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.04).start();
+        invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.02).start();
         switchPopups();
 /*
         visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.05)
