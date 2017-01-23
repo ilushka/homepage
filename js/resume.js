@@ -83,6 +83,7 @@ function AnimeObj(obj) {
     this._intervalId = 0;             // current interval ID
 //    this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
     this._animationQueue = [];
+    this._completionFunc = null;
 
 /*
     this.getCurrentType = function() {
@@ -110,6 +111,9 @@ function AnimeObj(obj) {
             if (that._animationQueue.length === 0) {
                 // we are done with all animations in queue
                 that.stopAnimation();
+                if (that._completionFunc !== null) {
+                    that._completionFunc();
+                }
                 return;
             }
             for (var ii = 0; ii < that._animationQueue.length; ii++) {
@@ -132,6 +136,12 @@ function AnimeObj(obj) {
         return this;
     };
 
+    // set animation completion callback
+    this.completion = function(func) {
+        this._completionFunc = func;
+        return this;
+    };
+
     // animate object's opacity
     this.animateOpacity = function(from, to, rate) {
         if (this._animeInProgress === true) {
@@ -140,7 +150,6 @@ function AnimeObj(obj) {
         this._animationQueue.push(new AnimateOpacity(this._obj, from, to, rate));
         return this;
     };
-
 }
 
 // execute func when event stream stops for "timeout" milliseconds or recieves "rate" events 
@@ -161,23 +170,80 @@ var throttleFunc = function(rate, timeout, func) {
     }
 };
 
+// create HTML object from string
+var createHtml = function(html) {
+    var template = document.createElement("template");
+    template.innerHTML = html;
+    return template.content.firstChild;
+};
+
+// circular doubly-linked list of popup content
+function PopupList() {
+    this._list = [];
+    this._index = 0;
+    this.addPopup = function(obj) {
+        this._list.push(obj);
+    };
+    this.getNextPopup = function() {
+        if (++this._index == this._list.length) {
+            this._index = 0;
+        }
+        var obj = this._list[this._index];
+        return obj;
+    };
+    this.getPrevPopup = function() {
+        if (--this._index < 0) {
+            this._index = (this._list.length - 1);
+        }
+        var obj = this._list[this._index];
+        return obj;
+    };
+}
+
 window.addEventListener("load", function(event) {
     var EVENT_THROTTLE_RATE = 45;
     var DEBOUNCE_DELAY  = 100;
 
-    var popupAnime = new AnimeObj(document.getElementById("popup"));
+    var popupList = new PopupList();
+    popupList.addPopup(createHtml("<div>1</div>"));
+    popupList.addPopup(createHtml("<div>2</div>"));
+    popupList.addPopup(createHtml("<div>3</div>"));
+    popupList.addPopup(createHtml("<div>4</div>"));
+    popupList.addPopup(createHtml("<div>5</div>"));
+
+    var visiblePopup = document.getElementById("popup1");
+    var invisiblePopup = document.getElementById("popup2");
+    var visPopupAnime = new AnimeObj(visiblePopup);
+    var invisPopupAnime = new AnimeObj(invisiblePopup);
+    var switchPopups = function() {
+        [visiblePopup, visPopupAnime, invisiblePopup, invisPopupAnime] =
+                [invisiblePopup, invisPopupAnime, visiblePopup, visPopupAnime];
+    };
     var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        popupAnime.animateY(window.innerHeight, 30, 18).animateOpacity(0.0, 1.0, 0.01).start();
+        visPopupAnime.stopAnimation();
+        invisPopupAnime.stopAnimation();
+        invisiblePopup.replaceChild(popupList.getNextPopup(), invisiblePopup.childNodes[0]);
+        visPopupAnime.animateY(100, (0 - visiblePopup.clientHeight), 18).animateOpacity(1.0, 0.0, 0.01).start();
+        invisPopupAnime.animateY(window.innerHeight, 100, 18).animateOpacity(0.0, 1.0, 0.01).start();
+        switchPopups();
     });
     var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        popupAnime.animateY(30, window.innerHeight, 18).animateOpacity(1.0, 0.0, 0.04).start();
+        visPopupAnime.stopAnimation();
+        invisPopupAnime.stopAnimation();
+        invisiblePopup.replaceChild(popupList.getPrevPopup(), invisiblePopup.childNodes[0]);
+        invisPopupAnime.animateY((0 - invisiblePopup.clientHeight), 100, 18).animateOpacity(0.0, 1.0, 0.01).start();
+        visPopupAnime.animateY(100, window.innerHeight, 18).animateOpacity(1.0, 0.0, 0.01).start();
+        switchPopups();
     });
 
+
+/* MONKEY:
     document.onkeydown = function(e) {
         e.preventDefault();
         console.log(e);
         throttledScrollUp();
     };
+*/
 
 //    window.onmousewheel = window.onwheel = function(e) {
     var lastDeltaY = 0;
