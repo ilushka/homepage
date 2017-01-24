@@ -4,9 +4,9 @@ var ANIMATION_TYPE = {
     DOWN: 2,
 };
 
-function AnimateY(obj, from, to, rate) {
+function AnimateBase(obj, from, to, rate) {
     this._obj = obj;
-    this._position = from;
+    this._current = from;
     this._to = to;
     this._isComplete = false;
     if (from > to) {
@@ -17,11 +17,17 @@ function AnimateY(obj, from, to, rate) {
         this._rate = 0;
     }
 
+    // this animation is complete, or not
     this.isComplete = function() {
         return this._isComplete;
     };
 
+    // overwrite this method when subclassing
     this.drawFrame = function() {
+        throw new Error("Not implemented!");
+    };
+
+    this.calcAndDrawFrame = function() {
         var delta = 0;
         if (this._isComplete === true) {
             return;
@@ -29,53 +35,41 @@ function AnimateY(obj, from, to, rate) {
         delta = this._to - this._position;
         if (Math.abs(delta) < Math.abs(this._rate)) {
             // leftover distance is smaller than the rate
-            this._position += delta;
+            this._current += delta;
         } else {
-            this._position += this._rate;;
+            this._current += this._rate;;
         }
-        this._obj.style.top = this._position + "px";
-        if (this._position === this._to) {
+// MONKEY:        this._obj.style.top = this._position + "px";
+        this.drawFrame();
+        if (this._current === this._to) {
             this._isComplete = true;
         }
+    };
+
+}
+
+// animate object on Y axis
+function AnimateY(obj, from, to, rate) {
+    AnimateBase.apply(this, [obj, from, to, rate]);
+    this.drawFrame = function() {
+        this._obj.style.top = this._current + "px";
     };
 } 
+AnimateY.prototype = Object.create(AnimateBase.prototype, {
+    "constructor":  AnimateY
+});
 
+// animate object's opacity
 function AnimateOpacity(obj, from, to, rate) {
-    this._obj = obj;
-    this._opacity = from;
-    this._to = to;
-    this._isComplete = false;
-    if (from > to) {
-        this._rate = -rate;
-    } else if (from < to) {
-        this._rate = rate;
-    } else {
-        this._rate = 0;
-    }
-
-    this.isComplete = function() {
-        return this._isComplete;
-    };
-
+    AnimateBase.apply(this, [obj, from, to, rate]);
     this.drawFrame = function() {
-        var delta = 0;
-        if (this._isComplete === true) {
-            return;
-        }
-        delta = this._to - this._opacity;
-        if (Math.abs(delta) < Math.abs(this._rate)) {
-            // leftover opacity is smaller than the rate
-            this._opacity += delta;
-        } else {
-            this._opacity += this._rate;;
-        }
-        this._opacity = Math.round(this._opacity * 1000) / 1000;
-        this._obj.style.opacity = this._opacity;
-        if (this._opacity === this._to) {
-            this._isComplete = true;
-        }
+        this._current = Math.round(this._current * 1000) / 1000;    // round to 3 decimal places
+        this._obj.style.opacity = this._current;
     };
 }
+AnimateOpacity.prototype = Object.create(AnimateBase.prototype, {
+    "constructor":  AnimateOpacity
+});
 
 function AnimeObj(obj) {
     this._obj = obj;                  // object to animate
@@ -123,7 +117,7 @@ function AnimeObj(obj) {
             }
             for (var ii = 0; ii < that._animationQueue.length; ii++) {
                 if (that._animationQueue[ii].isComplete() === false) {
-                    that._animationQueue[ii].drawFrame();
+                    that._animationQueue[ii].calcAndDrawFrame();
                 } else {
                     // this particular animation is complete
                     that._animationQueue.splice(ii, 1);
