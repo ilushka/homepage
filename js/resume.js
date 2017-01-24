@@ -1,9 +1,3 @@
-var ANIMATION_TYPE = {
-    NONE: 0,
-    UP:   1,
-    DOWN: 2,
-};
-
 function AnimateBase(obj, from, to, rate) {
     this._obj = obj;
     this._current = from;
@@ -39,7 +33,6 @@ function AnimateBase(obj, from, to, rate) {
         } else {
             this._current += this._rate;;
         }
-// MONKEY:        this._obj.style.top = this._position + "px";
         this.drawFrame();
         if (this._current === this._to) {
             this._isComplete = true;
@@ -71,19 +64,16 @@ AnimateOpacity.prototype = Object.create(AnimateBase.prototype, {
     "constructor":  AnimateOpacity
 });
 
-function AnimeObj(obj) {
+function Animation(obj) {
     this._obj = obj;                  // object to animate
     this._animeInProgress = false;    // is animation in progress
     this._intervalId = 0;             // current interval ID
-//    this._currentAnimation = ANIMATION_TYPE.NONE;    // currenty type of animation
     this._animationQueue = [];
     this._completionFunc = null;
 
-/*
-    this.getCurrentType = function() {
-        return this._currentAnimation;
+    this.htmlObj = function() {
+        return this._obj;
     };
-*/
 
     this.animationInProgress = function() {
         return this._animeInProgress;
@@ -92,7 +82,6 @@ function AnimeObj(obj) {
     this.stopAnimation = function() {
         clearInterval(this._intervalId);
         this._animeInProgress = false;
-//        this._currentAnimation = ANIMATION_TYPE.NONE;
     };
 
     this.start = function() {
@@ -151,51 +140,118 @@ function AnimeObj(obj) {
     };
 }
 
-// execute func when event stream stops for "timeout" milliseconds or recieves "rate" events 
-var throttleFunc = function(rate, timeout, func) {
-    var toId = 0;
-    var eventCount = 0;
-    return function(e) {
-        if (eventCount === 0) {
-            func();
-        }
-        eventCount++;
-        if (eventCount === rate) {
-            eventCount = 0;
-            console.log("eventCount");
-        }
-        clearTimeout(toId);
-        toId = setTimeout(function() {console.log("timeout");eventCount = 0;}, timeout);
-    }
-};
-
-// create HTML object from string
-var createHtml = function(html) {
-    var template = document.createElement("template");
-    template.innerHTML = html;
-    return template.content.firstChild;
-};
-
 // circular doubly-linked list of popup content
-function PopupList() {
-    this._list = [];
+function ResumeExperience() {
+    this._experienceTable = {};
+    this._yearList = []
     this._index = 0;
-    this.addPopup = function(obj) {
-        this._list.push(obj);
+    this.addExperience = function(year, obj) {
+        this._yearList.push(year);
+        this._experienceTable[year] = obj;
     };
-    this.getNextPopup = function() {
-        if (++this._index == this._list.length) {
+    this.getNextExperience = function() {
+        if (++this._index == this._yearList.length) {
             this._index = 0;
         }
-        var obj = this._list[this._index];
-        return obj;
+        var year = this._yearList[this._index];
+        return this._experienceTable[year];
     };
-    this.getPrevPopup = function() {
+    this.getPrevExperience = function() {
         if (--this._index < 0) {
-            this._index = (this._list.length - 1);
+            this._index = (this._yearList.length - 1);
         }
-        var obj = this._list[this._index];
-        return obj;
+        var year = this._yearList[this._index];
+        return this._experienceTable[year];
+    };
+    this.getExperience = function(year) {
+        this._index = this._yearList.indexOf(year);
+        return this._experienceTable[year];
+    };
+}
+
+function Popups(experience) {
+    this._experience = experience;    // circular interface to retrieve experience
+    this._visible = null;             // popup currently visible on screen
+    this._popups = [new Animation(document.getElementById("popup1")), new Animation(document.getElementById("popup2"))];  // all popups
+    this._invisible = this._popups.slice(0);   // popups that are not visible (shallow clone of this._popups)
+
+    // is animation of any popup currently happening?
+    this._animationIsInProgress = function() {
+        return (this._popups[0].animationInProgress() || this._popups[1].animationInProgress());
+    };
+
+    // show a popup on the screen
+    this.showPopup = function(year) {
+        if (this._animationIsInProgress()) {
+            return;
+        }
+        if (this._visible === null) {
+            // if no popup is shown slide popup from top
+            this._visible = this._invisible.shift();
+            this._visible.htmlObj().replaceChild(this._experience.getExperience(year), this._visible.htmlObj().childNodes[0]);
+            this._visible.animateY(0, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
+        } else {
+            if (this._visible.htmlObj().childNodes[0].dataset.popupYear === year) {
+                // popup with this content/experience is already on screen
+                return;
+            }
+            if (parseInt(year) > this._visible.htmlObj().childNodes[0].dataset.popupYear) {
+                // specified year is greater than current, slide down
+                this.showNextPopup(year);
+            } else {
+                // specified year is less than current, slide up
+                this.showPrevPopup(year);
+            }
+        }
+    };
+
+    // hide current popup by sliding it to bottom and show new popup by sliding from top
+    this.showNextPopup = function(year) {
+        if (this._animationIsInProgress() || this._visible === null) {
+            return;
+        }
+        if (year === undefined) {
+            // sliding down show next chronological experience
+            this._invisible[0].htmlObj().replaceChild(this._experience.getNextExperience(), this._invisible[0].htmlObj().childNodes[0]);
+        } else {
+            // ... or any experience
+            this._invisible[0].htmlObj().replaceChild(this._experience.getExperience(year), this._invisible[0].htmlObj().childNodes[0]);
+        }
+        this._visible.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.04).start();
+        this._invisible[0].animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.02).start();
+        // switch popups
+        this._invisible.push(this._visible);
+        this._visible = this._invisible.shift();
+    };
+
+    // hide current popup by sliding it to top and show new popup by sliding from bottom
+    this.showPrevPopup = function(year) {
+        if (this._animationIsInProgress() || this._visible === null) {
+            return;
+        }
+        if (year === undefined) {
+            // sliding up show previous chronological experience
+            this._invisible[0].htmlObj().replaceChild(this._experience.getPrevExperience(), this._invisible[0].htmlObj().childNodes[0]);
+        } else {
+            // ... or any experience
+            this._invisible[0].htmlObj().replaceChild(this._experience.getExperience(year), this._invisible[0].htmlObj().childNodes[0]);
+        }
+        this._visible.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.04).start();
+        this._invisible[0].animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
+        // switch popups
+        this._invisible.push(this._visible);
+        this._visible = this._invisible.shift();
+    };
+
+    // move current popup off the screen
+    this.hidePopup = function() {
+        if (this._animationIsInProgress() || this._visible === null) {
+            return;
+        }
+        // slide down when hidding
+        this._visible.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.04).start();
+        this._invisible.push(this._visible);
+        this._visible = null;
     };
 }
 
@@ -203,54 +259,59 @@ window.addEventListener("load", function(event) {
     var EVENT_THROTTLE_RATE = 45;
     var DEBOUNCE_DELAY  = 100;
 
-    var popupList = new PopupList();
-    popupList.addPopup(createHtml("<div>1</div>"));
-    popupList.addPopup(createHtml("<div>2</div>"));
-    popupList.addPopup(createHtml("<div>3</div>"));
-    popupList.addPopup(createHtml("<div>4</div>"));
-    popupList.addPopup(createHtml("<div>5</div>"));
+    // create HTML object from string
+    var createHtml = function(html) {
+        var template = document.createElement("template");
+        template.innerHTML = html;
+        return template.content.firstChild;
+    };
 
-    var visiblePopup = document.getElementById("popup1");
-    var invisiblePopup = document.getElementById("popup2");
-    var visPopupAnime = new AnimeObj(visiblePopup);
-    var invisPopupAnime = new AnimeObj(invisiblePopup);
-    var switchPopups = function() {
-        [visiblePopup, visPopupAnime, invisiblePopup, invisPopupAnime] =
-                [invisiblePopup, invisPopupAnime, visiblePopup, visPopupAnime];
+    // initialize circular list of experiences
+    var experience = new ResumeExperience();
+    experience.addExperience("2006", createHtml("<div data-popup-year=\"2006\">2006</div>"));
+    experience.addExperience("2010", createHtml("<div data-popup-year=\"2010\">2010</div>"));
+    experience.addExperience("2013", createHtml("<div data-popup-year=\"2013\">2013</div>"));
+    experience.addExperience("2015", createHtml("<div data-popup-year=\"2015\">2015</div>"));
+    experience.addExperience("2017", createHtml("<div data-popup-year=\"2017\">2017</div>"));
+    var popups = new Popups(experience);
+
+    // execute func when event stream stops for "timeout" milliseconds or recieves "rate" amount of events 
+    var throttleFunc = function(rate, timeout, func) {
+        var toId = 0;         // setTimeout() ID
+        var eventCount = 0;   // count of received events
+        return function(e) {
+            if (eventCount === 0) {
+                func();
+            }
+            // throttling
+            eventCount++;
+            if (eventCount === rate) {
+                eventCount = 0;
+            }
+            // debouncing
+            clearTimeout(toId);
+            toId = setTimeout(function() {eventCount = 0;}, timeout);
+        }
     };
     var throttledScrollUp = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        if (visPopupAnime.animationInProgress() || invisPopupAnime.animationInProgress()) {
-            return;
-        }
-        invisiblePopup.replaceChild(popupList.getNextPopup(), invisiblePopup.childNodes[0]);
-        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.04).start();
-        invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
-        switchPopups();
-/*
-        visPopupAnime.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.05)
-            .completion(function() {
-                invisPopupAnime.animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.1).start();
-                switchPopups();
-            }).start();
-*/
+        popups.showPrevPopup();
     });
     var throttledScrollDown = throttleFunc(EVENT_THROTTLE_RATE, DEBOUNCE_DELAY, function() {
-        if (visPopupAnime.animationInProgress() || invisPopupAnime.animationInProgress()) {
-            return;
-        }
-        invisiblePopup.replaceChild(popupList.getPrevPopup(), invisiblePopup.childNodes[0]);
-        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.04).start();
-        invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.02).start();
-        switchPopups();
-/*
-        visPopupAnime.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.05)
-            .completion(function() {
-                invisPopupAnime.animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.1).start();
-                switchPopups();
-            }).start();
-*/
+        popups.showNextPopup();
     });
 
+    // initialize timeline points
+    var timelinePoints = document.getElementsByClassName("timeline-point");
+    for (var ii = 0; ii < timelinePoints.length; ii++) {
+        timelinePoints[ii].onmouseover = function(e) {
+            // show experience for correspondin year of timeline point
+            popups.showPopup(e.currentTarget.dataset.year);
+        };
+    }
+
+    window.onclick = function(e) {
+        popups.hidePopup();
+    };
 
 /* MONKEY:
     document.onkeydown = function(e) {
@@ -284,5 +345,7 @@ window.addEventListener("load", function(event) {
         }
         lastDeltaY = Math.abs(e.deltaY);
     };
+
+    popups.showPopup("2006");
 }, false);
 

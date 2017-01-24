@@ -32,6 +32,33 @@ header > h1 {
     width: 100%;
 }
 
+#timeline {
+    position: absolute;
+    width: 60%;
+    height: 10px;
+    top: 470%;
+    left: 50%;
+    margin-left: -30%;
+    background-color: red;
+    z-index: 10;
+}
+
+.timeline-point {
+    width: 50px;
+    height: 50px;
+    background-color: blue;
+    float: left;
+    margin-top: -20px;
+    z-index: 20;
+}
+
+#timeline-2006 {
+}
+
+#timeline-2010 {
+    margin-left: 100px;
+}
+
 .popup {
     position: fixed;
     width: 500px;
@@ -40,6 +67,7 @@ header > h1 {
     top: 100%;
     margin-left: -250px;
     background-color: red;
+    z-index: 5;
 }
 
 .popup > div {
