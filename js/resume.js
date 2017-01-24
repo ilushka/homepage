@@ -188,7 +188,10 @@ function Popups(experience) {
         if (this._visible === null) {
             // if no popup is shown slide popup from top
             this._visible = this._invisible.shift();
-            this._visible.htmlObj().replaceChild(this._experience.getExperience(year), this._visible.htmlObj().childNodes[0]);
+            if (this._visible.htmlObj().childNodes.length > 0) {
+                this._visible.htmlObj().removeChild(this._visible.htmlObj().firstChild);
+            }
+            this._visible.htmlObj().appendChild(this._experience.getExperience(year));
             this._visible.animateY(0, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
         } else {
             if (this._visible.htmlObj().childNodes[0].dataset.popupYear === year) {
@@ -210,12 +213,15 @@ function Popups(experience) {
         if (this._animationIsInProgress() || this._visible === null) {
             return;
         }
+        if (this._invisible[0].htmlObj().childNodes.length > 0) {
+            this._invisible[0].htmlObj().removeChild(this._invisible[0].htmlObj().firstChild);
+        }
         if (year === undefined) {
             // sliding down show next chronological experience
-            this._invisible[0].htmlObj().replaceChild(this._experience.getNextExperience(), this._invisible[0].htmlObj().childNodes[0]);
+            this._invisible[0].htmlObj().appendChild(this._experience.getNextExperience());
         } else {
             // ... or any experience
-            this._invisible[0].htmlObj().replaceChild(this._experience.getExperience(year), this._invisible[0].htmlObj().childNodes[0]);
+            this._invisible[0].htmlObj().appendChild(this._experience.getExperience(year));
         }
         this._visible.animateY(100, 300, 10).animateOpacity(1.0, 0.0, 0.04).start();
         this._invisible[0].animateY(0, 100, 5).animateOpacity(0.0, 1.0, 0.02).start();
@@ -229,12 +235,15 @@ function Popups(experience) {
         if (this._animationIsInProgress() || this._visible === null) {
             return;
         }
+        if (this._invisible[0].htmlObj().childNodes.length > 0) {
+            this._invisible[0].htmlObj().removeChild(this._invisible[0].htmlObj().firstChild);
+        }
         if (year === undefined) {
             // sliding up show previous chronological experience
-            this._invisible[0].htmlObj().replaceChild(this._experience.getPrevExperience(), this._invisible[0].htmlObj().childNodes[0]);
+            this._invisible[0].htmlObj().appendChild(this._experience.getPrevExperience());
         } else {
             // ... or any experience
-            this._invisible[0].htmlObj().replaceChild(this._experience.getExperience(year), this._invisible[0].htmlObj().childNodes[0]);
+            this._invisible[0].htmlObj().appendChild(this._experience.getExperience(year));
         }
         this._visible.animateY(100, 0, 10).animateOpacity(1.0, 0.0, 0.04).start();
         this._invisible[0].animateY(300, 100, 10).animateOpacity(0.0, 1.0, 0.02).start();
